@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-extra-dates",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Adds review scheduling and snooze-clearing on completion for TaskNotes tasks.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

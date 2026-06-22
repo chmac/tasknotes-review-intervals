@@ -1,88 +1,120 @@
-import {
-	Editor,
-	MarkdownView,
-	MarkdownFileInfo,
-	Modal,
-	Notice,
-	Plugin,
-} from 'obsidian';
+import { App, EventRef, Notice, Plugin, TFile } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
-	MyPluginSettings,
-	SampleSettingTab,
+	ExtraDatesSettings,
+	ExtraDatesSettingTab,
 } from './settings';
 
-// Remember to rename these classes and interfaces!
+interface TaskNotesApi {
+	readonly apiVersion: number;
+	hasCapability(capability: string): boolean;
+	events: {
+		on(
+			event: string,
+			handler: (payload: { taskPath: string }) => void,
+		): EventRef;
+	};
+}
 
-export default class MyPlugin extends Plugin {
-	settings!: MyPluginSettings;
+interface ObsidianWithPlugins extends App {
+	plugins: {
+		getPlugin(id: string): { api?: TaskNotesApi } | null;
+	};
+}
+
+export default class ExtraDatesPlugin extends Plugin {
+	settings!: ExtraDatesSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (_evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
-
-		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			},
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (
-				editor: Editor,
-				_ctx: MarkdownView | MarkdownFileInfo,
-			) => {
-				editor.replaceSelection('Sample editor command');
-			},
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
+			id: 'mark-reviewed',
+			name: 'Mark reviewed',
 			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView =
-					this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
+				const file = this.app.workspace.getActiveFile();
+				if (!file) return false;
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+				const fm =
+					this.app.metadataCache.getFileCache(file)?.frontmatter;
+				const interval: unknown =
+					fm?.[this.settings.reviewIntervalField];
+				if (typeof interval !== 'number' || !Number.isFinite(interval))
+					return false;
+
+				if (!checking) {
+					void this.app.fileManager.processFrontMatter(
+						file,
+						(frontmatter: Record<string, unknown>) => {
+							const days =
+								frontmatter[this.settings.reviewIntervalField];
+							if (
+								typeof days !== 'number' ||
+								!Number.isFinite(days)
+							)
+								return;
+							const date = new Date();
+							date.setDate(date.getDate() + days);
+							const y = date.getFullYear();
+							const m = String(date.getMonth() + 1).padStart(
+								2,
+								'0',
+							);
+							const d = String(date.getDate()).padStart(2, '0');
+							frontmatter[this.settings.reviewField] =
+								`${y}-${m}-${d}`;
+						},
+					);
 				}
-				return false;
+
+				return true;
 			},
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new ExtraDatesSettingTab(this.app, this));
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(activeDocument, 'click', (_evt: MouseEvent) => {
-			new Notice('Click');
+		this.app.workspace.onLayoutReady(() => {
+			this.wireTaskNotesEvents();
 		});
+	}
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000),
+	private wireTaskNotesEvents() {
+		const api = (this.app as ObsidianWithPlugins).plugins.getPlugin(
+			'tasknotes',
+		)?.api;
+
+		if (
+			!api ||
+			api.apiVersion !== 1 ||
+			!api.hasCapability('recurring.events')
+		) {
+			new Notice(
+				'Tasknotes extra dates: TaskNotes plugin not found or missing recurring.events capability — snooze clearing on completion is disabled.',
+			);
+			return;
+		}
+
+		const clearSnoozed = (payload: { taskPath: string }) => {
+			const file = this.app.vault.getAbstractFileByPath(payload.taskPath);
+			if (!(file instanceof TFile)) return;
+			this.app.fileManager
+				.processFrontMatter(
+					file,
+					(frontmatter: Record<string, unknown>) => {
+						delete frontmatter[this.settings.snoozedField];
+					},
+				)
+				.catch((err: unknown) =>
+					console.error(
+						'extra-dates: failed to clear snoozed field',
+						err,
+					),
+				);
+		};
+
+		this.registerEvent(api.events.on('task.completed', clearSnoozed));
+		this.registerEvent(
+			api.events.on('recurring.instance.completed', clearSnoozed),
 		);
 	}
 
@@ -92,23 +124,11 @@ export default class MyPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<MyPluginSettings>,
+			(await this.loadData()) as Partial<ExtraDatesSettings>,
 		);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
 	}
 }

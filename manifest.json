@@ -1,11 +1,9 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "extra-dates",
+	"name": "TaskNotes Extra Dates",
 	"version": "1.0.0",
-	"minAppVersion": "1.0.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"minAppVersion": "1.4.4",
+	"description": "Adds review scheduling and snooze-clearing on completion for TaskNotes tasks.",
+	"author": "Callum Macdonald",
 	"isDesktopOnly": false
 }
