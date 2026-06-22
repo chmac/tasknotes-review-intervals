@@ -7,15 +7,18 @@ interface PluginWithSettings {
 
 export const DEFAULT_REVIEW_FIELD = 'review';
 export const DEFAULT_REVIEW_INTERVAL_FIELD = 'reviewIntervalDays';
+export const DEFAULT_REVIEW_INTERVAL_DAYS = 7;
 
 export interface ReviewIntervalsSettings {
 	reviewField: string;
 	reviewIntervalField: string;
+	defaultReviewIntervalDays: number;
 }
 
 export const DEFAULT_SETTINGS: ReviewIntervalsSettings = {
 	reviewField: DEFAULT_REVIEW_FIELD,
 	reviewIntervalField: DEFAULT_REVIEW_INTERVAL_FIELD,
+	defaultReviewIntervalDays: DEFAULT_REVIEW_INTERVAL_DAYS,
 };
 
 export class ReviewIntervalsSettingTab extends PluginSettingTab {
@@ -56,6 +59,27 @@ export class ReviewIntervalsSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.reviewIntervalField =
 							value || DEFAULT_REVIEW_INTERVAL_FIELD;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Default review interval (days)')
+			.setDesc(
+				'Pre-filled value when the "mark reviewed" command prompts for an interval.',
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder(String(DEFAULT_REVIEW_INTERVAL_DAYS))
+					.setValue(
+						String(this.plugin.settings.defaultReviewIntervalDays),
+					)
+					.onChange(async (value) => {
+						const parsed = parseInt(value, 10);
+						this.plugin.settings.defaultReviewIntervalDays =
+							Number.isInteger(parsed) && parsed > 0
+								? parsed
+								: DEFAULT_REVIEW_INTERVAL_DAYS;
 						await this.plugin.saveSettings();
 					}),
 			);

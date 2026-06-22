@@ -1,6 +1,6 @@
 {
 	"name": "tasknotes-review-intervals",
-	"version": "1.0.0",
+	"version": "0.2.0",
 	"description": "Adds review scheduling for TaskNotes tasks via a configurable review interval.",
 	"main": "main.js",
 	"type": "module",
