@@ -11,7 +11,7 @@ import {
 	ReviewIntervalsSettings,
 	ReviewIntervalsSettingTab,
 } from './settings';
-import { computeNextReviewDate } from './utils';
+import { getInitialReviewPatch, getMarkReviewedAction } from './review';
 
 export default class ReviewIntervalsPlugin extends Plugin {
 	settings!: ReviewIntervalsSettings;
@@ -31,28 +31,18 @@ export default class ReviewIntervalsPlugin extends Plugin {
 				if (!checking) {
 					const frontmatterCache =
 						this.app.metadataCache.getFileCache(file)?.frontmatter;
-					const interval: unknown =
-						frontmatterCache?.[this.settings.reviewIntervalField];
+					const action = getMarkReviewedAction(
+						(frontmatterCache as Record<string, unknown>) ?? {},
+						this.settings.reviewIntervalField,
+						new Date(),
+					);
 
-					if (
-						typeof interval === 'number' &&
-						Number.isFinite(interval)
-					) {
+					if (action.kind === 'update') {
 						void this.app.fileManager.processFrontMatter(
 							file,
 							(frontmatter: Record<string, unknown>) => {
-								const days =
-									frontmatter[
-										this.settings.reviewIntervalField
-									];
-								if (
-									typeof days !== 'number' ||
-									!Number.isFinite(days)
-								) {
-									return;
-								}
 								frontmatter[this.settings.reviewField] =
-									computeNextReviewDate(new Date(), days);
+									action.reviewDate;
 							},
 						);
 					} else {
@@ -127,14 +117,16 @@ class SetReviewIntervalModal extends Modal {
 		if (!Number.isInteger(days) || days <= 0) {
 			return;
 		}
+		const patch = getInitialReviewPatch(
+			days,
+			this.settings.reviewIntervalField,
+			this.settings.reviewField,
+			new Date(),
+		);
 		void this.app.fileManager.processFrontMatter(
 			this.file,
 			(frontmatter: Record<string, unknown>) => {
-				frontmatter[this.settings.reviewIntervalField] = days;
-				frontmatter[this.settings.reviewField] = computeNextReviewDate(
-					new Date(),
-					days,
-				);
+				Object.assign(frontmatter, patch);
 			},
 		);
 		this.close();
