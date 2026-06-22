@@ -8,11 +8,11 @@ Run the **"Mark reviewed"** command on any note. The plugin reads a `reviewInter
 
 If the note doesn't have a `reviewIntervalDays` field yet, a prompt asks you to set one. The interval is saved to the note so future reviews are one command away.
 
-Example frontmatter after marking reviewed with a 14-day interval:
+Example frontmatter after marking reviewed on January 1st with a 14-day interval:
 
 ```yaml
 reviewIntervalDays: 14
-review: 2026-07-06
+review: 2026-01-15
 ```
 
 ## Settings
