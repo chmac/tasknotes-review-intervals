@@ -112,7 +112,6 @@ export default class ExtraDatesPlugin extends Plugin {
 				);
 		};
 
-		this.registerEvent(api.events.on('task.completed', clearSnoozed));
 		this.registerEvent(
 			api.events.on('recurring.instance.completed', clearSnoozed),
 		);
