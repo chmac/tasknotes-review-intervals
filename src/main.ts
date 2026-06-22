@@ -11,7 +11,8 @@ import {
 	ReviewIntervalsSettings,
 	ReviewIntervalsSettingTab,
 } from './settings';
-import { getInitialReviewPatch, getMarkReviewedAction } from './review';
+import { getMarkReviewedAction } from './review';
+import { computeNextReviewDate } from './utils';
 
 export default class ReviewIntervalsPlugin extends Plugin {
 	settings!: ReviewIntervalsSettings;
@@ -95,14 +96,14 @@ class SetReviewIntervalModal extends Modal {
 
 		input.inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
 			if (e.key === 'Enter') {
-				this.submit(input.getValue());
+				void this.submit(input.getValue());
 			}
 		});
 
 		new ButtonComponent(this.contentEl)
 			.setButtonText('Set interval')
 			.setCta()
-			.onClick(() => this.submit(input.getValue()));
+			.onClick(() => void this.submit(input.getValue()));
 
 		input.inputEl.focus();
 		input.inputEl.select();
@@ -112,21 +113,19 @@ class SetReviewIntervalModal extends Modal {
 		this.contentEl.empty();
 	}
 
-	private submit(value: string) {
+	private async submit(value: string) {
 		const days = parseInt(value, 10);
 		if (!Number.isInteger(days) || days <= 0) {
 			return;
 		}
-		const patch = getInitialReviewPatch(
-			days,
-			this.settings.reviewIntervalField,
-			this.settings.reviewField,
-			new Date(),
-		);
-		void this.app.fileManager.processFrontMatter(
+		await this.app.fileManager.processFrontMatter(
 			this.file,
 			(frontmatter: Record<string, unknown>) => {
-				Object.assign(frontmatter, patch);
+				frontmatter[this.settings.reviewIntervalField] = days;
+				frontmatter[this.settings.reviewField] = computeNextReviewDate(
+					new Date(),
+					days,
+				);
 			},
 		);
 		this.close();
