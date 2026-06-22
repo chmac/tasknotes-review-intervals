@@ -6,7 +6,7 @@ interface PluginWithSettings {
 }
 
 export const DEFAULT_REVIEW_FIELD = 'review';
-export const DEFAULT_REVIEW_INTERVAL_FIELD = 'reviewInterval';
+export const DEFAULT_REVIEW_INTERVAL_FIELD = 'reviewIntervalDays';
 
 export interface ReviewIntervalsSettings {
 	reviewField: string;
