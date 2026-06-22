@@ -4,6 +4,7 @@ import {
 	ReviewIntervalsSettings,
 	ReviewIntervalsSettingTab,
 } from './settings';
+import { computeNextReviewDate } from './utils';
 
 export default class ReviewIntervalsPlugin extends Plugin {
 	settings!: ReviewIntervalsSettings;
@@ -43,16 +44,8 @@ export default class ReviewIntervalsPlugin extends Plugin {
 							) {
 								return;
 							}
-							const date = new Date();
-							date.setDate(date.getDate() + days);
-							const y = date.getFullYear();
-							const m = String(date.getMonth() + 1).padStart(
-								2,
-								'0',
-							);
-							const d = String(date.getDate()).padStart(2, '0');
 							frontmatter[this.settings.reviewField] =
-								`${y}-${m}-${d}`;
+								computeNextReviewDate(new Date(), days);
 						},
 					);
 				}
