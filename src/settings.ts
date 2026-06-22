@@ -1,26 +1,23 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import ExtraDatesPlugin from './main';
+import ReviewIntervalsPlugin from './main';
 
-export const DEFAULT_SNOOZED_FIELD = 'snoozed';
 export const DEFAULT_REVIEW_FIELD = 'review';
 export const DEFAULT_REVIEW_INTERVAL_FIELD = 'reviewInterval';
 
-export interface ExtraDatesSettings {
-	snoozedField: string;
+export interface ReviewIntervalsSettings {
 	reviewField: string;
 	reviewIntervalField: string;
 }
 
-export const DEFAULT_SETTINGS: ExtraDatesSettings = {
-	snoozedField: DEFAULT_SNOOZED_FIELD,
+export const DEFAULT_SETTINGS: ReviewIntervalsSettings = {
 	reviewField: DEFAULT_REVIEW_FIELD,
 	reviewIntervalField: DEFAULT_REVIEW_INTERVAL_FIELD,
 };
 
-export class ExtraDatesSettingTab extends PluginSettingTab {
-	plugin: ExtraDatesPlugin;
+export class ReviewIntervalsSettingTab extends PluginSettingTab {
+	plugin: ReviewIntervalsPlugin;
 
-	constructor(app: App, plugin: ExtraDatesPlugin) {
+	constructor(app: App, plugin: ReviewIntervalsPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -28,20 +25,6 @@ export class ExtraDatesSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Snoozed field name')
-			.setDesc('Frontmatter field cleared when a task is completed.')
-			.addText((text) =>
-				text
-					.setPlaceholder(DEFAULT_SNOOZED_FIELD)
-					.setValue(this.plugin.settings.snoozedField)
-					.onChange(async (value) => {
-						this.plugin.settings.snoozedField =
-							value || DEFAULT_SNOOZED_FIELD;
-						await this.plugin.saveSettings();
-					}),
-			);
 
 		new Setting(containerEl)
 			.setName('Review field name')

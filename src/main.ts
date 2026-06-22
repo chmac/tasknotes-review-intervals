@@ -1,29 +1,12 @@
-import { App, EventRef, Notice, Plugin, TFile } from 'obsidian';
+import { Plugin } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
-	ExtraDatesSettings,
-	ExtraDatesSettingTab,
+	ReviewIntervalsSettings,
+	ReviewIntervalsSettingTab,
 } from './settings';
 
-interface TaskNotesApi {
-	readonly apiVersion: number;
-	hasCapability(capability: string): boolean;
-	events: {
-		on(
-			event: string,
-			handler: (payload: { taskPath: string }) => void,
-		): EventRef;
-	};
-}
-
-interface ObsidianWithPlugins extends App {
-	plugins: {
-		getPlugin(id: string): { api?: TaskNotesApi } | null;
-	};
-}
-
-export default class ExtraDatesPlugin extends Plugin {
-	settings!: ExtraDatesSettings;
+export default class ReviewIntervalsPlugin extends Plugin {
+	settings!: ReviewIntervalsSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -71,50 +54,7 @@ export default class ExtraDatesPlugin extends Plugin {
 			},
 		});
 
-		this.addSettingTab(new ExtraDatesSettingTab(this.app, this));
-
-		this.app.workspace.onLayoutReady(() => {
-			this.wireTaskNotesEvents();
-		});
-	}
-
-	private wireTaskNotesEvents() {
-		const api = (this.app as ObsidianWithPlugins).plugins.getPlugin(
-			'tasknotes',
-		)?.api;
-
-		if (
-			!api ||
-			api.apiVersion !== 1 ||
-			!api.hasCapability('recurring.events')
-		) {
-			new Notice(
-				'Tasknotes extra dates: TaskNotes plugin not found or missing recurring.events capability — snooze clearing on completion is disabled.',
-			);
-			return;
-		}
-
-		const clearSnoozed = (payload: { taskPath: string }) => {
-			const file = this.app.vault.getAbstractFileByPath(payload.taskPath);
-			if (!(file instanceof TFile)) return;
-			this.app.fileManager
-				.processFrontMatter(
-					file,
-					(frontmatter: Record<string, unknown>) => {
-						delete frontmatter[this.settings.snoozedField];
-					},
-				)
-				.catch((err: unknown) =>
-					console.error(
-						'extra-dates: failed to clear snoozed field',
-						err,
-					),
-				);
-		};
-
-		this.registerEvent(
-			api.events.on('recurring.instance.completed', clearSnoozed),
-		);
+		this.addSettingTab(new ReviewIntervalsSettingTab(this.app, this));
 	}
 
 	onunload() {}
@@ -123,7 +63,7 @@ export default class ExtraDatesPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<ExtraDatesSettings>,
+			(await this.loadData()) as Partial<ReviewIntervalsSettings>,
 		);
 	}
 
