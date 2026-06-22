@@ -1,5 +1,9 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
-import ReviewIntervalsPlugin from './main';
+import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
+
+interface PluginWithSettings {
+	settings: ReviewIntervalsSettings;
+	saveSettings(): Promise<void>;
+}
 
 export const DEFAULT_REVIEW_FIELD = 'review';
 export const DEFAULT_REVIEW_INTERVAL_FIELD = 'reviewInterval';
@@ -15,9 +19,9 @@ export const DEFAULT_SETTINGS: ReviewIntervalsSettings = {
 };
 
 export class ReviewIntervalsSettingTab extends PluginSettingTab {
-	plugin: ReviewIntervalsPlugin;
+	plugin: Plugin & PluginWithSettings;
 
-	constructor(app: App, plugin: ReviewIntervalsPlugin) {
+	constructor(app: App, plugin: Plugin & PluginWithSettings) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

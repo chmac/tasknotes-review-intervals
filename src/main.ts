@@ -16,14 +16,20 @@ export default class ReviewIntervalsPlugin extends Plugin {
 			name: 'Mark reviewed',
 			checkCallback: (checking: boolean) => {
 				const file = this.app.workspace.getActiveFile();
-				if (!file) return false;
+				if (!file) {
+					return false;
+				}
 
-				const fm =
+				const frontmatterCache =
 					this.app.metadataCache.getFileCache(file)?.frontmatter;
 				const interval: unknown =
-					fm?.[this.settings.reviewIntervalField];
-				if (typeof interval !== 'number' || !Number.isFinite(interval))
+					frontmatterCache?.[this.settings.reviewIntervalField];
+				if (
+					typeof interval !== 'number' ||
+					!Number.isFinite(interval)
+				) {
 					return false;
+				}
 
 				if (!checking) {
 					void this.app.fileManager.processFrontMatter(
@@ -34,8 +40,9 @@ export default class ReviewIntervalsPlugin extends Plugin {
 							if (
 								typeof days !== 'number' ||
 								!Number.isFinite(days)
-							)
+							) {
 								return;
+							}
 							const date = new Date();
 							date.setDate(date.getDate() + days);
 							const y = date.getFullYear();
