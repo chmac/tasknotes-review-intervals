@@ -15,7 +15,10 @@ export function getMarkReviewedAction(
 		Number.isFinite(interval) &&
 		interval > 0
 	) {
-		return { kind: 'update', reviewDate: computeNextReviewDate(today, interval) };
+		return {
+			kind: 'update',
+			reviewDate: computeNextReviewDate(today, interval),
+		};
 	}
 	return { kind: 'prompt' };
 }
@@ -25,7 +28,7 @@ export function getInitialReviewPatch(
 	reviewIntervalField: string,
 	reviewField: string,
 	today: Date,
-): Record<string, unknown> {
+): Record<string, string | number> {
 	return {
 		[reviewIntervalField]: days,
 		[reviewField]: computeNextReviewDate(today, days),
