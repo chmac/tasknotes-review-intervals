@@ -1,10 +1,5 @@
 import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-interface PluginWithSettings {
-	settings: ReviewIntervalsSettings;
-	saveSettings(): Promise<void>;
-}
-
 export const DEFAULT_REVIEW_FIELD = 'review';
 export const DEFAULT_REVIEW_INTERVAL_FIELD = 'reviewIntervalDays';
 export const DEFAULT_REVIEW_INTERVAL_DAYS = 7;
@@ -22,11 +17,18 @@ export const DEFAULT_SETTINGS: ReviewIntervalsSettings = {
 };
 
 export class ReviewIntervalsSettingTab extends PluginSettingTab {
-	plugin: Plugin & PluginWithSettings;
+	private settings: ReviewIntervalsSettings;
+	private readonly saveSettings: () => Promise<void>;
 
-	constructor(app: App, plugin: Plugin & PluginWithSettings) {
+	constructor(
+		app: App,
+		plugin: Plugin,
+		settings: ReviewIntervalsSettings,
+		saveSettings: () => Promise<void>,
+	) {
 		super(app, plugin);
-		this.plugin = plugin;
+		this.settings = settings;
+		this.saveSettings = saveSettings;
 	}
 
 	display(): void {
@@ -39,11 +41,11 @@ export class ReviewIntervalsSettingTab extends PluginSettingTab {
 			.addText((text) =>
 				text
 					.setPlaceholder(DEFAULT_REVIEW_FIELD)
-					.setValue(this.plugin.settings.reviewField)
+					.setValue(this.settings.reviewField)
 					.onChange(async (value) => {
-						this.plugin.settings.reviewField =
+						this.settings.reviewField =
 							value || DEFAULT_REVIEW_FIELD;
-						await this.plugin.saveSettings();
+						await this.saveSettings();
 					}),
 			);
 
@@ -55,11 +57,11 @@ export class ReviewIntervalsSettingTab extends PluginSettingTab {
 			.addText((text) =>
 				text
 					.setPlaceholder(DEFAULT_REVIEW_INTERVAL_FIELD)
-					.setValue(this.plugin.settings.reviewIntervalField)
+					.setValue(this.settings.reviewIntervalField)
 					.onChange(async (value) => {
-						this.plugin.settings.reviewIntervalField =
+						this.settings.reviewIntervalField =
 							value || DEFAULT_REVIEW_INTERVAL_FIELD;
-						await this.plugin.saveSettings();
+						await this.saveSettings();
 					}),
 			);
 
@@ -72,15 +74,15 @@ export class ReviewIntervalsSettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder(String(DEFAULT_REVIEW_INTERVAL_DAYS))
 					.setValue(
-						String(this.plugin.settings.defaultReviewIntervalDays),
+						String(this.settings.defaultReviewIntervalDays),
 					)
 					.onChange(async (value) => {
 						const parsed = parseInt(value, 10);
-						this.plugin.settings.defaultReviewIntervalDays =
+						this.settings.defaultReviewIntervalDays =
 							Number.isInteger(parsed) && parsed > 0
 								? parsed
 								: DEFAULT_REVIEW_INTERVAL_DAYS;
-						await this.plugin.saveSettings();
+						await this.saveSettings();
 					}),
 			);
 	}

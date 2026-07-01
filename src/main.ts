@@ -62,7 +62,14 @@ export default class ReviewIntervalsPlugin extends Plugin {
 			},
 		});
 
-		this.addSettingTab(new ReviewIntervalsSettingTab(this.app, this));
+		this.addSettingTab(
+			new ReviewIntervalsSettingTab(
+				this.app,
+				this,
+				this.settings,
+				() => this.saveSettings(),
+			),
+		);
 	}
 
 	onunload() {}

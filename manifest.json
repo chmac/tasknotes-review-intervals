@@ -2,7 +2,7 @@
 	"id": "tasknotes-review-intervals",
 	"name": "TaskNotes Review Intervals",
 	"version": "0.3.1",
-	"minAppVersion": "1.12.0",
+	"minAppVersion": "1.4.4",
 	"description": "Adds review scheduling for TaskNotes tasks via a configurable review interval.",
 	"author": "Callum Macdonald",
 	"isDesktopOnly": false
