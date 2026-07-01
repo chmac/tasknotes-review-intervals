@@ -2,6 +2,7 @@ import {
 	App,
 	ButtonComponent,
 	Modal,
+	Notice,
 	Plugin,
 	TextComponent,
 	TFile,
@@ -12,7 +13,7 @@ import {
 	ReviewIntervalsSettingTab,
 } from './settings';
 import { getMarkReviewedAction } from './review';
-import { computeNextReviewDate } from './utils';
+import { computeNextReviewDate, reviewNoticeMessage } from './utils';
 
 export default class ReviewIntervalsPlugin extends Plugin {
 	settings!: ReviewIntervalsSettings;
@@ -39,6 +40,7 @@ export default class ReviewIntervalsPlugin extends Plugin {
 					);
 
 					if (action.kind === 'update') {
+						const intervalDays = (frontmatterCache as Record<string, unknown>)?.[this.settings.reviewIntervalField] as number;
 						void this.app.fileManager.processFrontMatter(
 							file,
 							(frontmatter: Record<string, unknown>) => {
@@ -46,6 +48,7 @@ export default class ReviewIntervalsPlugin extends Plugin {
 									action.reviewDate;
 							},
 						);
+						new Notice(reviewNoticeMessage(intervalDays, action.reviewDate));
 					} else {
 						new SetReviewIntervalModal(
 							this.app,
@@ -118,16 +121,15 @@ class SetReviewIntervalModal extends Modal {
 		if (!Number.isInteger(days) || days <= 0) {
 			return;
 		}
+		const reviewDate = computeNextReviewDate(new Date(), days);
 		await this.app.fileManager.processFrontMatter(
 			this.file,
 			(frontmatter: Record<string, unknown>) => {
 				frontmatter[this.settings.reviewIntervalField] = days;
-				frontmatter[this.settings.reviewField] = computeNextReviewDate(
-					new Date(),
-					days,
-				);
+				frontmatter[this.settings.reviewField] = reviewDate;
 			},
 		);
+		new Notice(reviewNoticeMessage(days, reviewDate));
 		this.close();
 	}
 }

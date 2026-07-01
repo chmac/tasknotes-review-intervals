@@ -1,3 +1,7 @@
+export function reviewNoticeMessage(days: number, reviewDate: string): string {
+	return `Next review in ${days} days (${reviewDate})`;
+}
+
 export function computeNextReviewDate(today: Date, intervalDays: number): string {
 	const date = new Date(today);
 	date.setDate(date.getDate() + intervalDays);
